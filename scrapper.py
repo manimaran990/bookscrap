@@ -7,6 +7,10 @@ import argparse
 import csv
 import re
 import multiprocessing
+import logging
+
+# initialize the log settings
+logging.basicConfig(filename='app.log',level=logging.INFO)
 
 BASE_URL = 'http://www.noolulagam.com/books'
 HEADER = ['நூல் பெயர்', 'வகை', 'எழுத்தாளர்', 'பதிப்பகம்', 'Year', 'விலை']
@@ -33,7 +37,8 @@ def get_data(n):
 			fin_dict.update(title)
 			res_lst.append(fin_dict)
 	except Exception as e:
-		print(f"error occurred {str(e)}")
+		logging.error('Error occurred ' + str(e))
+		pass
 	return res_lst 
 
 
@@ -43,6 +48,9 @@ if __name__ == '__main__':
 	parser.add_argument('--end', type=int, required=True, help='end page')
 	parser.add_argument('--out', type=str, default="books.csv", help="output filename")
 	args = parser.parse_args()
+	logging.info(f"starting page: {args.start}")
+	logging.info(f"end page: {args.end}")
+	logging.info(f"output filename {args.out}")
 
 	with multiprocessing.Pool() as p:
 		with open(args.out, 'a') as csvfile:
@@ -50,5 +58,10 @@ if __name__ == '__main__':
 			writer.writeheader()
 			for n in tqdm(p.imap_unordered(get_data, range(args.start, args.end+1))):
 				for item in n:
-					writer.writerow(item)
+					try:
+						writer.writerow(item)
+					except Exception as e:
+						logging.error('Error occurred ' + str(e))
+						pass
+
 				
